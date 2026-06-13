@@ -19,11 +19,11 @@ require (
 	github.com/bep/lazycache v0.8.1
 	github.com/bep/logg v0.4.0
 	github.com/bep/mclib v1.20401.20400
-	github.com/bep/overlayfs v0.10.0
+	github.com/bep/overlayfs v0.11.0
 	github.com/bep/simplecobra v0.7.0
 	github.com/bep/textandbinarywriter v0.1.0
 	github.com/bep/tmc v0.6.0
-	github.com/bits-and-blooms/bitset v1.24.4
+	github.com/bits-and-blooms/bitset v1.24.5
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/clbanning/mxj/v2 v2.7.0
 	github.com/dustin/go-humanize v1.0.1
@@ -68,16 +68,16 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/tdewolff/minify/v2 v2.24.13
 	github.com/tdewolff/parse/v2 v2.8.12
-	github.com/tetratelabs/wazero v1.11.1-0.20260521072212-475a1f8f0dc3
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/yuin/goldmark v1.8.2
 	github.com/yuin/goldmark-emoji v1.0.6
 	go.uber.org/automaxprocs v1.5.3
 	gocloud.dev v0.45.0
-	golang.org/x/image v0.41.0
+	golang.org/x/image v0.42.0
 	golang.org/x/mod v0.36.0
 	golang.org/x/net v0.55.0
-	golang.org/x/sync v0.20.0
-	golang.org/x/text v0.37.0
+	golang.org/x/sync v0.21.0
+	golang.org/x/text v0.38.0
 	golang.org/x/tools v0.45.0
 	google.golang.org/api v0.276.0
 	rsc.io/qr v0.2.0
@@ -191,4 +191,4 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
 
-go 1.25.0
+go 1.26.0
