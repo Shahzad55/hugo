@@ -275,6 +275,7 @@ func (p *preWrapper) Start(code bool, styleAttr string) string {
 }
 
 func inlineCodeAttrs(lang string) string {
+	lang = gohtml.EscapeString(lang)
 	return fmt.Sprintf(` class="code-inline language-%s"`, lang)
 }
 
@@ -282,6 +283,7 @@ func WritePreStart(w io.Writer, language, styleAttr string) {
 	fmt.Fprintf(w, `<pre tabindex="0"%s>`, styleAttr)
 	fmt.Fprint(w, "<code")
 	if language != "" {
+		language = gohtml.EscapeString(language)
 		fmt.Fprint(w, ` class="language-`+language+`"`)
 		fmt.Fprint(w, ` data-lang="`+language+`"`)
 	}
@@ -314,7 +316,7 @@ func writeDivStart(w hugio.FlexiWriter, attrs []attributes.Attribute, wrapperCla
 	if attrs != nil {
 		for _, attr := range attrs {
 			if attr.Name == "class" {
-				w.WriteString(" " + attr.ValueString())
+				w.WriteString(" " + gohtml.EscapeString(attr.ValueString()))
 				break
 			}
 		}

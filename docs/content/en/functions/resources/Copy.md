@@ -17,11 +17,7 @@ params:
 {{ end }}
 ```
 
-The relative URL of the new published resource will be:
+The `TARGETPATH` is relative to the [site root](g).
 
-```text
-/img/new-image-name.jpg
-```
-
-> [!note]
+> [!NOTE]
 > Use the `resources.Copy` function with global, page, and remote resources.

@@ -347,7 +347,7 @@ func (ns *Namespace) IsSet(c any, key any) (bool, error) {
 			return av.MapIndex(kv).IsValid(), nil
 		}
 	default:
-		ns.deps.Log.Warnf("calling IsSet with unsupported type %q (%T) will always return false.\n", av.Kind(), c)
+		ns.deps.Log.Warnf("calling IsSet with unsupported type %q (%T) for key %v will always return false.\n", av.Kind(), c, key)
 	}
 
 	return false, nil
@@ -657,7 +657,12 @@ func (ns *Namespace) Union(l1, l2 any) (any, error) {
 			if l1v.Type() != l2v.Type() &&
 				l1v.Type().Elem().Kind() != reflect.Interface &&
 				l2v.Type().Elem().Kind() != reflect.Interface {
-				return ins.r.Interface(), nil
+				// Numeric element types unify through the conversion below,
+				// mirroring how intersect matches numbers across types.
+				if !hreflect.IsNumber(l1v.Type().Elem().Kind()) ||
+					!hreflect.IsNumber(l2v.Type().Elem().Kind()) {
+					return ins.r.Interface(), nil
+				}
 			}
 
 			var (
@@ -698,7 +703,8 @@ func (ns *Namespace) Union(l1, l2 any) (any, error) {
 				case hreflect.IsNumber(kind):
 					var err error
 					l2vv, err = convertNumber(l2vv, typ)
-					if err == nil {
+					// The empty l1 prototype comes from l2 and may not match l1's element type.
+					if err == nil && l2vv.Type().AssignableTo(l1v.Type().Elem()) {
 						ins.appendIfNotSeen(l2vv)
 					}
 				case kind == reflect.Interface, kind == reflect.Struct, kind == reflect.Pointer:

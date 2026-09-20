@@ -807,13 +807,13 @@ func (c *cachedContentScope) contentPlain(ctx context.Context) (contentPlainPlai
 
 		// TODO(bep) is set in a test. Fix that.
 		if result.fuzzyWordCount == 0 {
-			result.fuzzyWordCount = (result.wordCount + 100) / 100 * 100
+			result.fuzzyWordCount = (result.wordCount + 99) / 100 * 100
 		}
 
 		if isCJKLanguage {
-			result.readingTime = (result.wordCount + 500) / 501
+			result.readingTime = (result.wordCount + 499) / 500
 		} else {
-			result.readingTime = (result.wordCount + 212) / 213
+			result.readingTime = (result.wordCount + 211) / 212
 		}
 
 		rs.Value = result
@@ -941,10 +941,8 @@ func (c *cachedContentScope) RenderString(ctx context.Context, args ...any) (tem
 
 	if pageparser.HasShortcode(contentToRender) {
 		ct := contentTableOfContents{
-			sourceInfo: sourceInfo{
-				filename: pco.po.p.pathOrTitle() + " (rendered from string)",
-				source:   []byte(contentToRender),
-			},
+			filename: pco.po.p.pathOrTitle() + " (rendered from string)",
+			source:   []byte(contentToRender),
 		}
 		ct.contentToRender = ct.source
 		// String contains a shortcode.

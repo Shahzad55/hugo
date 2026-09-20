@@ -16,7 +16,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.26.x]
+        go-version: [1.27.x]
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -51,6 +51,7 @@ jobs:
         run: |
           gem install asciidoctor -v "2.0.26"
           gem install asciidoctor-diagram -v "3.1.0"
+          gem install asciidoctor-html5s -v "0.5.1"
       - name: Install GoAT
         run: go install github.com/blampe/goat/cmd/goat@177de93b192b8ffae608e5d9ec421cc99bf68402
       - name: Install Python
@@ -63,7 +64,7 @@ jobs:
         run: go install github.com/gohugoio/gotmplfmt@latest
       - name: Install docutils
         run: |
-          pip install docutils
+          pip install docutils Pygments
           rst2html --version
       - if: matrix.os == 'ubuntu-latest'
         name: Install pandoc on Linux

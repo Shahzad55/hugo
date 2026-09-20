@@ -15,7 +15,7 @@ package partials_test
 
 import (
 	"bytes"
-	"fmt"
+	"context"
 	"regexp"
 	"sort"
 	"strings"
@@ -26,6 +26,7 @@ import (
 	"github.com/gohugoio/hugo/htesting"
 	"github.com/gohugoio/hugo/htesting/hqt"
 	"github.com/gohugoio/hugo/hugolib"
+	"github.com/gohugoio/hugo/tpl/partials"
 )
 
 func TestInclude(t *testing.T) {
@@ -170,8 +171,8 @@ D1
 
 	got := buf.String()
 
-	// Get rid of all the durations, they are never the same.
-	durationRe := regexp.MustCompile(`\b[\.\d]*(ms|ns|µs|s)\b`)
+	// Get rid of all the durations, including the space and unit, they are never the same.
+	durationRe := regexp.MustCompile(`\b[\.\d]*\s*(ms|ns|µs|s)\b`)
 
 	normalize := func(s string) string {
 		s = durationRe.ReplaceAllString(s, "")
@@ -215,37 +216,35 @@ baseURL = 'http://example.com/'
 {{ partialCached "easy1.html" "bar" }}
 {{ partialCached "easy1.html" "baz" }}
 {{ partialCached "easy2.html" "baz" }}
--- layouts/_partials/easy1.html --
+-- layouts/_partials/abc.html --
 ABCD
--- layouts/_partials/easy2.html --
-ABCDE
--- layouts/_partials/heavy.html --
-{{ $result := slice }}
-{{ range site.RegularPages }}
-{{ $result = $result | append (dict "title" .Title "link" .RelPermalink "readingTime" .ReadingTime) }}
-{{ end }}
-{{ range $result }}
-* {{ .title }} {{ .link }} {{ .readingTime }}
-{{ end }}
+-- layouts/_partials/42.html --
+{{ return 42 }}
+
 
 
 `)
 
-	for i := 1; i < 100; i++ {
-		files.WriteString(fmt.Sprintf("\n-- content/p%d.md --\n---\ntitle: page\n---\n"+strings.Repeat("FOO ", i), i))
-	}
+	bb := hugolib.Test(b, files.String())
+	ns := bb.H.TemplateStore.GetTemplateFuncsNamespace("partials").(*partials.Namespace)
 
-	cfg := hugolib.IntegrationTestConfig{
-		T:           b,
-		TxtarString: files.String(),
-	}
+	b.Run("abc", func(b *testing.B) {
+		for b.Loop() {
+			_, _ = ns.IncludeCached(context.Background(), "abc.html", "foo")
+		}
+	})
 
-	for b.Loop() {
-		b.StopTimer()
-		bb := hugolib.NewIntegrationTestBuilder(cfg)
-		b.StartTimer()
-		bb.Build()
-	}
+	b.Run("variant", func(b *testing.B) {
+		for b.Loop() {
+			_, _ = ns.IncludeCached(context.Background(), "abc.html", "foo", "variant")
+		}
+	})
+
+	b.Run("return", func(b *testing.B) {
+		for b.Loop() {
+			_, _ = ns.IncludeCached(context.Background(), "42.html", "foo")
+		}
+	})
 }
 
 func TestIncludeTimeout(t *testing.T) {
@@ -334,4 +333,98 @@ BAR
 	b := hugolib.Test(t, files)
 
 	b.AssertFileContent("public/index.html", "OO:BAR")
+}
+
+// See issue 15212.
+func TestPartialReturnConditional(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+baseURL = 'http://example.com/'
+-- layouts/home.html --
+1:{{ partial "parity.html" 1 }}|2:{{ partial "parity.html" 2 }}|
+-- layouts/_partials/parity.html --
+{{ if math.ModBool . 2 }}
+{{ return "even" }}
+{{ end }}
+{{ return "odd" }}
+  `
+
+	b := hugolib.Test(t, files)
+
+	b.AssertFileContent("public/index.html", "1:odd|2:even|")
+}
+
+// See issue 15212.
+func TestPartialReturnFromRange(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+baseURL = 'http://example.com/'
+-- layouts/home.html --
+{{ partial "find.html" (slice 1 2 3) }}|
+-- layouts/_partials/find.html --
+{{ range . }}{{ if eq . 2 }}{{ return . }}{{ end }}{{ end }}{{ return "notfound" }}
+  `
+
+	b := hugolib.Test(t, files)
+
+	b.AssertFileContent("public/index.html", "2|")
+}
+
+// See issue 15212.
+func TestPartialReturnBareStopsEarly(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+baseURL = 'http://example.com/'
+-- layouts/home.html --
+{{ partial "p.html" . }}
+-- layouts/_partials/p.html --
+partial-start|{{ if true }}{{ return }}{{ end }}partial-end
+  `
+
+	b := hugolib.Test(t, files)
+
+	b.AssertFileContent("public/index.html", "partial-start|", "! partial-end")
+}
+
+// See issue 15212.
+func TestPartialReturnNil(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+baseURL = 'http://example.com/'
+-- layouts/home.html --
+{{ if eq (partial "p.html" .) nil }}NIL{{ end }}
+-- layouts/_partials/p.html --
+{{ return nil }}
+  `
+
+	b := hugolib.Test(t, files)
+
+	b.AssertFileContent("public/index.html", "NIL")
+}
+
+// See issue 15212.
+func TestPartialReturnValueFromTemplateInclude(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+baseURL = 'http://example.com/'
+-- layouts/home.html --
+{{ partial "p.html" . }}|
+-- layouts/_partials/p.html --
+{{ template "p-helper" . }}
+{{ define "p-helper" }}{{ return 42 }}{{ end }}
+  `
+
+	b := hugolib.Test(t, files)
+
+	b.AssertFileContent("public/index.html", "42|")
 }

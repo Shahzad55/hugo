@@ -69,6 +69,18 @@ Moonrise Kingdom            <- Value
     ...
 ```
 
+### Assign terms in front matter
+
+Continuing with the example above, assign the terms for each movie in its front matter. Use the plural name of each taxonomy as the field name, and assign the terms as an array, even when a movie has only one term for a given taxonomy:
+
+{{< code-toggle file=content/movies/unbreakable.md fm=true >}}
+title = 'Unbreakable'
+actors = ['Bruce Willis','Samuel L. Jackson']
+directors = ['M. Night Shyamalan']
+{{< /code-toggle >}}
+
+Each term is a string, and a taxonomy is a flat list of terms rather than a nested data structure. To associate additional data with a term, create a page for the term as described in [Metadata](#metadata).
+
 ### Default destinations
 
 When taxonomies are used Hugo will automatically create both a page listing all the taxonomy's terms and individual pages with lists of content associated with each term. For example, a `categories` taxonomy declared in your configuration and used in your content front matter will create the following pages:
@@ -78,7 +90,7 @@ When taxonomies are used Hugo will automatically create both a page listing all 
 
 ## Configuration
 
-See [configure taxonomies](/configuration/taxonomies/).
+See [configure taxonomies][].
 
 ## Assign terms to content
 
@@ -118,7 +130,7 @@ author = 'authors'
 
 Then create content with one [branch bundle](g) for each term:
 
-```text
+```tree
 content/
 └── authors/
     ├── jsmith/
@@ -175,3 +187,5 @@ Or create a _term_ template specific to the `authors` taxonomy:
 ```
 
 In the example above we display the author including their affiliation and portrait, then a list of associated content.
+
+[configure taxonomies]: /configuration/taxonomies/

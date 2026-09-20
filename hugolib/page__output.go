@@ -140,13 +140,18 @@ func (po *pageOutput) Aliases() []string {
 
 		a = path.Join(baseDir, a)
 
-		if conf.C.IsUglyURLSection(p.Section()) && !strings.HasSuffix(a, ".html") {
-			a += ".html"
+		if conf.C.IsUglyURLSection(p.Section()) && !pathHasOutputFormatSuffix(a, f) {
+			a += f.MediaType.FirstSuffix.FullSuffix
 		}
 
 		aliases[i] = a
 	}
 	return aliases
+}
+
+// Key returns a unique key for this page output, used to e.g. hashing.
+func (po *pageOutput) Key() string {
+	return po.p.Path() + po.f.Name
 }
 
 func (po *pageOutput) incrRenderState() {

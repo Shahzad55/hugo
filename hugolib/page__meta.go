@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bep/logg"
 	"github.com/gobuffalo/flect"
 	"github.com/gohugoio/hugo/hugofs"
 	"github.com/gohugoio/hugo/hugofs/files"
@@ -96,6 +95,13 @@ func (m *pageMetaSource) String() string {
 		return fmt.Sprintf("pageMetaSource(%s, %s)", m.f.FileInfo().Meta().PathInfo, m.f.FileInfo().Meta().Filename)
 	}
 	return fmt.Sprintf("pageMetaSource(%s)", m.pathInfo)
+}
+
+func (m *pageMetaSource) contentWeight() int {
+	if m.f == nil {
+		return 0
+	}
+	return m.f.FileInfo().Meta().Weight
 }
 
 func (m *pageMetaSource) nodeCategoryPage() {
@@ -691,16 +697,6 @@ params:
 
 		if ps.s.frontmatterHandler.IsDateKey(loki) {
 			continue
-		}
-
-		if loki == "path" || loki == "kind" || loki == "lang" {
-			// See issue 12484.
-			// Only warn when the key was set at the top level of the
-			// original front matter; cascade.params can legitimately carry
-			// these names as user params (issue 14848).
-			if _, ok := pm.pageConfigSource.Frontmatter[loki]; ok {
-				hugo.DeprecateLevelMin(loki+" in front matter", "", "v0.144.0", logg.LevelWarn)
-			}
 		}
 
 		switch loki {

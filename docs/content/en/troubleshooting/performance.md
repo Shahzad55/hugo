@@ -18,8 +18,8 @@ For example, with Microsoft Defender Antivirus:
 
 Then type `hugo.exe` add press the **Add** button.
 
-> [!note]
-> Virus scanning exclusions are common, but use caution when changing these settings. See the [Microsoft Defender Antivirus documentation] for details.
+> [!NOTE]
+> Virus scanning exclusions are common, but use caution when changing these settings. See the [Microsoft Defender Antivirus documentation][] for details.
 
 Other virus scanners have similar exclusion mechanisms. See their respective documentation.
 
@@ -36,7 +36,7 @@ The result will look something like this:
 ```text
 Template Metrics:
 
-     cumulative       average       maximum      cache  percent  cached  total  
+     cumulative       average       maximum      cache  percent  cached  total
        duration      duration      duration  potential   cached   count  count  template
      ----------      --------      --------  ---------  -------  ------  -----  --------
   36.037476822s  135.990478ms  225.765245ms         11        0       0    265  _partials/head.html
@@ -69,7 +69,10 @@ maximum duration
 : The maximum time spent executing the template.
 
 cache potential
-: Displayed as a percentage, any _partial_ template with a 100% cache potential should be called with the [`partialCached`] function instead of the [`partial`] function. See the [caching](#caching) section below.
+: Displayed as a percentage, any _partial_ template with a 100% cache potential should be called with the [`partialCached`][] function instead of the [`partial`][] function. See the [caching](#caching) section below.
+
+  > [!WARNING]
+  > A 100% cache potential is calculated by comparing each execution's rendered output to the first execution's output, so it cannot detect side effects such as calls to [`warnf`][] or [`errorf`][], or execution order dependencies such as a conditional based on [`IsHome`][]. A _partial_ template that produces no visible output but performs validation, logging, or conditional logic based on context can show 100% cache potential even though caching it would suppress that behavior for all but the first invocation. Review the template's logic before switching it to `partialCached`.
 
 percent cached
 : The number of times the rendered templated was cached divided by the number of times the template was executed.
@@ -83,20 +86,24 @@ total count
 template
 : The path to the template, relative to the `layouts` directory.
 
-> [!note]
+> [!NOTE]
 > Hugo builds pages in parallel where multiple pages are generated simultaneously. Because of this parallelism, the sum of "cumulative duration" values is usually greater than the actual time it takes to build a site.
 
 ## Caching
 
-Some _partial_ templates such as sidebars or menus are executed many times during a site build. Depending on the content within the _partial_ template and the desired output, the template may benefit from caching to reduce the number of executions. The [`partialCached`] template function provides caching capabilities for _partial_ templates.
+Some _partial_ templates such as sidebars or menus are executed many times during a site build. Depending on the content within the _partial_ template and the desired output, the template may benefit from caching to reduce the number of executions. The [`partialCached`][] function provides caching capabilities for _partial_ templates.
 
-> [!note]
-> Note that you can create cached variants of each partial by passing additional arguments to `partialCached` beyond the initial context. See the `partialCached` documentation for more details.
+> [!NOTE]
+> Note that you can create cached variants of each _partial_ template by passing additional arguments to `partialCached` beyond the initial context. See the `partialCached` documentation for more details.
 
 ## Timers
 
-Use the `debug.Timer` function to determine execution time for a block of code, useful for finding performance bottlenecks in templates. See&nbsp;[details](/functions/debug/timer/).
+Use the [`debug.Timer`][] function to determine execution time for a block of code, useful for finding performance bottlenecks in templates.
 
-[`partial`]: /functions/partials/include/
-[`partialCached`]: /functions/partials/includecached/
 [Microsoft Defender Antivirus documentation]: https://support.microsoft.com/en-us/topic/how-to-add-a-file-type-or-process-exclusion-to-windows-security-e524cbc2-3975-63c2-f9d1-7c2eb5331e53
+[`debug.Timer`]: /functions/debug/timer/
+[`errorf`]: /functions/fmt/errorf/
+[`IsHome`]: /methods/page/ishome/
+[`partialCached`]: /functions/partials/includecached/
+[`partial`]: /functions/partials/include/
+[`warnf`]: /functions/fmt/warnf/

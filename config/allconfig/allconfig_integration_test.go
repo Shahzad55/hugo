@@ -25,11 +25,13 @@ weight = 2
 [[module.mounts]]
 source = 'content/en'
 target = 'content'
-lang = 'en'
+[module.mounts.sites.matrix]
+languages = 'en'
 [[module.mounts]]
 source = 'content/sv'
 target = 'content'
-lang = 'sv'
+[module.mounts.sites.matrix]
+languages = 'sv'
 -- content/en/p1.md --
 ---
 title: "p1"
@@ -193,6 +195,23 @@ x
 	b, err := hugolib.TestE(t, files)
 	b.Assert(err, qt.IsNotNil)
 	b.Assert(err.Error(), qt.Contains, `failed to create config: unknown output format "foo" for kind "home"`)
+}
+
+// See issue 15253.
+func TestInvalidDefaultOutputFormat(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+disableKinds = ['page','rss','section','sitemap','taxonomy','term']
+defaultOutputFormat = 'foo'
+-- layouts/home.html --
+x
+`
+
+	b, err := hugolib.TestE(t, files)
+	b.Assert(err, qt.IsNotNil)
+	b.Assert(err.Error(), qt.Contains, `failed to create config: unknown default output format "foo"`)
 }
 
 func TestContentTypesDefault(t *testing.T) {

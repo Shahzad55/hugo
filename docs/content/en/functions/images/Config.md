@@ -11,7 +11,7 @@ params:
 aliases: [/functions/imageconfig]
 ---
 
-> [!note]
+> [!NOTE]
 > This is a legacy function, superseded by the [`Width`][] and [`Height`][] methods for [global resources](g), [page resources](g), and [remote resources](g). See the [image processing][] section for details.
 
 ```go-html-template
@@ -22,6 +22,8 @@ aliases: [/functions/imageconfig]
 ```
 
 Supported image formats include AVIF, BMP, GIF, HEIC, HEIF, JPEG, PNG, TIFF, and WebP.
+
+Hugo caches the result, so calling the function multiple times with the same path incurs no additional overhead.
 
 [`Height`]: /methods/resource/height/
 [`Width`]: /methods/resource/width/

@@ -49,6 +49,7 @@ var (
 		"es2022": api.ES2022,
 		"es2023": api.ES2023,
 		"es2024": api.ES2024,
+		"es2025": api.ES2025,
 	}
 
 	engineName = map[string]api.EngineName{
@@ -182,6 +183,9 @@ type ExternalOptions struct {
 
 	// Maps a component import to another.
 	Shims map[string]string
+
+	// User provided import context. If set, we will look here first.
+	ImportContext any
 
 	// Configuring a loader for a given file type lets you load that file type with an
 	// import statement or a require call. For example, configuring the .png file extension

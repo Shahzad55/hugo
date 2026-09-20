@@ -14,7 +14,6 @@
 package hugolib
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"path"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/bep/helpers/maphelpers"
 	"github.com/gohugoio/go-radix"
+	"github.com/gohugoio/hugo/common/herrors"
 	"github.com/gohugoio/hugo/common/paths"
 	"github.com/gohugoio/hugo/common/types"
 	"github.com/gohugoio/hugo/hugofs/files"
@@ -134,7 +134,7 @@ func (a *allPagesAssembler) createAllPages() error {
 		}()
 	}
 
-	if err := cmp.Or(a.doCreatePages("", 0), a.g.Wait()); err != nil {
+	if err := herrors.Or(a.doCreatePages("", 0), a.g.Wait()); err != nil {
 		return err
 	}
 	if err := a.pwRoot.WalkContext.HandleEventsAndHooks(); err != nil {
@@ -362,7 +362,7 @@ func (a *allPagesAssembler) doCreatePages(prefix string, depth int) error {
 
 		switch v := n.(type) {
 		case contentNodeSeq, contentNodes:
-			return handleContentNodeSeq(contentNodeToSeq(v))
+			return handleContentNodeSeq(cnh.contentNodeToSeq(v))
 		case *pageMetaSource:
 			n2, err = handlePageMetaSource(v, nil, false)
 			if err != nil {
@@ -508,6 +508,15 @@ func (a *allPagesAssembler) doCreatePages(prefix string, depth int) error {
 				// Try to preserve the original casing if possible.
 				sectionUnnormalized := p.Unnormalized().Section()
 				rootSectionPath := a.h.Conf.PathParser().Parse(files.ComponentFolderContent, "/"+sectionUnnormalized+"/_index.md")
+
+				// A regular page (e.g. content/s1.md) may share the same tree
+				// key as its section (both map to /s1). In that case the page
+				// itself already occupies the section root; creating a synthetic
+				// section on top of it would overwrite the real content.
+				if _, exists := treePages.GetRaw(rootSectionPath.Base()); exists {
+					return true, nil
+				}
+
 				var rootSectionPages contentNode
 				rootSectionPages, _, err = transformPages(rootSectionPath.Base(), &pageMetaSource{
 					pathInfo:        rootSectionPath,
@@ -772,7 +781,7 @@ func (a *allPagesAssembler) doCreatePages(prefix string, depth int) error {
 
 				if _, found := nodes[p.s.siteVector]; !found {
 					var rs *resourceSource
-					match := cnh.findContentNodeForSiteVector(p.s.siteVector, duplicateResourceFiles, contentNodeToSeq(n))
+					match := cnh.findContentNodeForSiteVector(p.s.siteVector, duplicateResourceFiles, cnh.contentNodeToSeq(n))
 					if match == nil {
 						return true
 					}
@@ -1376,8 +1385,11 @@ func (a *allPagesAssembler) createMissingTaxonomies() error {
 	for viewName, languages := range viewLanguages {
 		key := viewName.pluralTreeKey
 		if a.h.isRebuild() {
-			if v := tree.Get(key); v != nil {
-				// Already there.
+			// Note that we cannot use tree.Get here, as the tree at this point
+			// may hold not yet assembled *pageMetaSource nodes.
+			// We're only interested in whether the auto created (not file backed)
+			// taxonomy node is still there.
+			if n, found := tree.GetRaw(key); found && cnh.hasAutoContentNode(n) {
 				continue
 			}
 		}

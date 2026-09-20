@@ -61,6 +61,16 @@ func NewRootMappingFs(fs afero.Fs, rms ...*RootMapping) (*RootMappingFs, error) 
 			panic(fmt.Sprintf("invalid root mapping; from/to: %s/%s", rm.From, rm.To))
 		}
 
+		// Don't allow a symlinked mount root (or any directory between it and
+		// the module root) to escape the module.
+		symlink, err := isSymlinkOrHasSymlinkParent(fs, rm.ToBase, rm.To)
+		if err != nil {
+			return nil, err
+		}
+		if symlink {
+			continue
+		}
+
 		fi, err := fs.Stat(rm.To)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -729,8 +739,16 @@ func (fs *RootMappingFs) statRoot(root *RootMapping, filename string) (FileMetaI
 		return nil, err
 	}
 
-	// Don't allow symlinks to escape the mount.
+	// Don't allow symlinks to escape the mount, neither as the file itself
+	// nor as any directory between it and the mount root.
 	if fi.Mode()&os.ModeSymlink != 0 {
+		return nil, os.ErrNotExist
+	}
+	symlinkParent, err := hasSymlinkParent(fs.Fs, root.To, filename)
+	if err != nil {
+		return nil, err
+	}
+	if symlinkParent {
 		return nil, os.ErrNotExist
 	}
 
